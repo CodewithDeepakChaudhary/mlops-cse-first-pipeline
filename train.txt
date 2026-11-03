@@ -7,6 +7,9 @@ from pathlib import Path
 import mlflow
 import mlflow.sklearn
 
+# Client API lets us manage registered models and their aliases
+from mlflow import MlflowClient
+
 # Configure MLFlow tracking
 mlflow.set_tracking_uri("http://127.0.0.1:7001")
 
@@ -64,6 +67,16 @@ with mlflow.start_run() as run:
     recall = recall_score(y_test, y_pred, average="macro", zero_division=0)
     print(f"Recall: {recall}")
 
+    # Model Quality Gate
+    # Define the min acceptable test accuracy for now
+    MIN_TEST_ACCURACY = 0.90
+    if accuracy < MIN_TEST_ACCURACY:
+        raise ValueError(
+            f"Model rejected: test accuracy: {accuracy:.2f%}"
+            f"is below the required {MIN_TEST_ACCURACY}"
+        )
+    print("Model Quality Gate Passed...")
+
     mlflow.log_metrics({
         "test_accuracy": accuracy,
         "test_precision": precision,
@@ -86,3 +99,33 @@ with mlflow.start_run() as run:
             "sklearn.tree._tree.Tree"
         ]
     )
+
+    # Assign the champion alias to the newly registered model
+    client = MlflowClient()
+    # Identify current training run
+    # We use this run ID to find the model version registered by this partticular run
+    current_run_id = mlflow.active_run().info.run_id
+
+    # Retrive all versions registered under model name
+    registered_versions = client.search_model_versions(
+        "name ='iris-classifier'"
+    )
+
+    # Find the version created by the current trainig run
+    current_model_version = next(
+        (
+            version
+            for version in registered_versions
+            if version.run_id == current_run_id
+        ),
+        None
+    )
+
+    client.set_registered_model_alias(
+        name="iris_classifier",
+        alias="champion",
+        version = current_model_version.version
+    )
+
+
+    print("Registered Model: iris-classifier")
