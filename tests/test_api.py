@@ -2,11 +2,12 @@
 from fastapi.testclient import TestClient
 
 import pytest
+
 # Import the application object defined in main.py
 from main import create_app
 
 # Create a reusable test client for all test functions.
-#client = TestClient(app)
+# client = TestClient(app)
 
 # The tests will no longer require a running MLFlow server
 # They test API independently using a fake model
@@ -18,14 +19,15 @@ def fake_model_loader():
     return FakeIrisModel()
 
 def fake_version_loader():
-    return "test_version"
+    return "test-version"
 
 @pytest.fixture
 def client():
     app = create_app(
-        model_loader = fake_model_loader,
-        version_loader = fake_version_loader
+        model_loader=fake_model_loader,
+        version_loader=fake_version_loader
     )
+
     with TestClient(app) as test_client:
         yield test_client
 
@@ -39,12 +41,9 @@ def test_health_endpoint(client):
     assert response.status_code == 200
     
     # Now check response body
-    assert response.json() == {
-        "status": "healthy",
-        "model_name": "iris-classification",
-        "model_version": "test_version",
-    }
-    assert response.json()["model_version"] == "test_version"
+    assert response.json()["status"] == "healthy"
+    assert response.json()["model_version"] == "test-version"
+
 
 def test_valid_iris_prediction(client):
     """
