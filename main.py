@@ -92,6 +92,7 @@ def create_app(
             "class_name": ["setosa", "versicolor", "virginica"][prediction]
         }
 
+    return app
 
 # Production application instance
 app = create_app()
