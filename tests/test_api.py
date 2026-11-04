@@ -18,7 +18,7 @@ def fake_model_loader():
     return FakeIrisModel()
 
 def fake_version_loader():
-    return "test-version"
+    return "test_version"
 
 @pytest.fixture
 def client():
